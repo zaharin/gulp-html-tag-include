@@ -1,0 +1,27 @@
+{
+    "name": "gulp-html-tag-include",
+    "version": "0.0.1",
+    "description": "Gulp plugin for building HTML files into each other",
+    "main": "index.js",
+    "author": {
+        "name": "dissolve"
+    },
+    "keywords": [
+        "gulpplugin",
+        "include",
+        "html"
+    ],
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/zaharin/gulp-html-tag-include.git"
+    },
+    "license": "MIT",
+    "dependencies": {
+        "gulp-util": "^3.0.1",
+        "through2": "^0.6.3"
+    },
+    "homepage": "https://github.com/zaharin/gulp-html-tag-include"
+}
