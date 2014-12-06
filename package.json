@@ -1,6 +1,6 @@
 {
   "name": "gulp-html-tag-include",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Gulp plugin for building HTML files into each other",
   "main": "index.js",
   "author": {
