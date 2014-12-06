@@ -5,7 +5,6 @@ var
     , fs     = require('fs')
     , util   = require('util')
     , os     = require('os')
-    , defaults = require('lodash.defaults')
     ;
 
 var
@@ -20,7 +19,7 @@ function Include(options, transOptions) {
     transOptions.objectMode = true;
     stream.Transform.call(this, transOptions);
 
-    this.options = defaults(options || {}, { tagName: 'include' });
+    this.options.tagName = this.options.tagName || 'include';
     this.options.tagOpen = '<' + this.options.tagName + '>';
     this.options.tagClose = '</' + this.options.tagName + '>';
 
@@ -86,6 +85,8 @@ Include.prototype.extractIncludeData = function (parentFilename, content) {
 
     filename = content.substring(posOpen + this.options.tagOpen.length, posClose).trim();
     fullFilename = path.normalize(path.dirname(parentFilename) + path.sep + filename);
+
+    if (!fs.existsSync(fullFilename)) throw new gutil.PluginError(pluginName, 'File not found: ' + fullFilename);
 
     looping = this.stackPath.length > 1 && this.stackPath.indexOf(fullFilename) > -1;
     if (looping) {
