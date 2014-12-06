@@ -16,3 +16,9 @@ results
 npm-debug.log
 node_modules
 *.sublime*
+
+.idea
+dest
+gulpfile.js
+index.html
+templates
