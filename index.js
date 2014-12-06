@@ -1,38 +1,30 @@
 var
-    gutil  = require('gulp-util')
+    gutil    = require('gulp-util')
     , stream = require('stream')
     , path   = require('path')
     , fs     = require('fs')
     , util   = require('util')
     , os     = require('os')
+    , defaults = require('lodash.defaults')
     ;
 
 var
-    pluginName = 'gulp-html-tag-include'
-    , tagOpen  = '<include>'
-    , tagClose = '</include>'
-    ;
+    pluginName = 'gulp-html-tag-include';
 
-function Include(options) {
+function Include(options, transOptions) {
     if (!(this instanceof Include)) {
-        return new Include(options);
+        return new Include(transOptions);
     }
 
-    stream.Transform.call(this, options);
+    if (!transOptions) transOptions = {};
+    transOptions.objectMode = true;
+    stream.Transform.call(this, transOptions);
+
+    this.options = defaults(options || {}, { tagName: 'include' });
+    this.options.tagOpen = '<' + this.options.tagName + '>';
+    this.options.tagClose = '</' + this.options.tagName + '>';
+
     this.stackPath = [];
-    this.stackPath.toString = function () {
-        var
-            result = ''
-            , index = 1
-            ;
-
-        this.forEach(function (item) {
-            result += [index, '. ', item, os.EOL].join('');
-            index++;
-        });
-
-        return result;
-    };
 }
 util.inherits(Include, stream.Transform);
 
@@ -76,9 +68,9 @@ Include.prototype.extractIncludeData = function (parentFilename, content) {
 
     if (!content) return;
 
-    posOpen = content.indexOf(tagOpen);
+    posOpen = content.indexOf(this.options.tagOpen);
     if (posOpen > -1) {
-        posClose = content.indexOf(tagClose, posOpen + tagOpen.length);
+        posClose = content.indexOf(this.options.tagClose, posOpen + this.options.tagOpen.length);
 
         if (posClose > -1) {
             found = true;
@@ -87,17 +79,17 @@ Include.prototype.extractIncludeData = function (parentFilename, content) {
 
     if (!found) return;
 
-    filename = content.substring(posOpen + tagOpen.length, posClose);
+    filename = content.substring(posOpen + this.options.tagOpen.length, posClose).trim();
     fullFilename = path.normalize(path.dirname(parentFilename) + path.sep + filename);
 
     looping = this.stackPath.length > 1 && this.stackPath.indexOf(fullFilename) > -1;
     if (looping) {
         this.emit('error',
-            new gutil.PluginError(pluginName, ['Looping include', os.EOL, 'Stack path:', os.EOL, this.stackPath.toString()].join('') ));
+            new gutil.PluginError(pluginName, ['Looping include', os.EOL, 'Stack path:', os.EOL, this.stackPath.join(os.EOL)].join('') ));
     }
 
     contentTop = content.substring(0, posOpen);
-    contentBottom = content.substring(posClose + tagClose.length);
+    contentBottom = content.substring(posClose + this.options.tagClose.length);
     contentInclude = fs.readFileSync(fullFilename, { encoding: 'utf8' });
 
     return {
@@ -125,6 +117,6 @@ Include.prototype.processingContent = function (parentFilename, content) {
     return content;
 };
 
-module.exports = function () {
-    return new Include({ objectMode: true });
+module.exports = function (options) {
+    return new Include(options);
 };
