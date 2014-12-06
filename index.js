@@ -1,130 +1,127 @@
 var
     gutil    = require('gulp-util')
-    , stream = require('stream')
     , path   = require('path')
     , fs     = require('fs')
-    , util   = require('util')
     , os     = require('os')
+    , through = require('through2')
+    , defaults = require('lodash.defaults')
     ;
 
 var
-    pluginName = 'gulp-html-tag-include';
+    PluginError = gutil.PluginError
+    , EOL = os.EOL
+    ;
 
-function Include(options, transOptions) {
-    if (!(this instanceof Include)) {
-        return new Include(transOptions);
-    }
+const
+    PLUGIN_NAME = 'gulp-html-tag-include';
 
-    if (!transOptions) transOptions = {};
-    transOptions.objectMode = true;
-    stream.Transform.call(this, transOptions);
-
-    options = options || {};
-    this.options = {};
-    this.options.tagName = options.tagName || 'include';
-    this.options.tagOpen = '<' + this.options.tagName + '>';
-    this.options.tagClose = '</' + this.options.tagName + '>';
-
-    this.stackPath = [];
-}
-util.inherits(Include, stream.Transform);
-
-Include.prototype._transform = function (file, enc, cb) {
-    var content;
-
-    if (file.isNull()) {
-        this.push(file);
-        return cb();
-    }
-
-    if (file.isStream()) {
-        this.emit('error', new gutil.PluginError(pluginName, 'Stream content is not supported'));
-        return cb();
-    }
-
-    if (file.isBuffer) {
-        try {
-            content = this.processingContent(path.normalize(file.path), file.contents.toString('utf8'));
-
-            if (typeof content === 'string' && content) {
-                file.contents = new Buffer(content);
-            }
-        } catch (err) {
-            this.emit('error', new gutil.PluginError(pluginName, err));
-        }
-
-    }
-
-    this.push(file);
-    cb();
-};
-
-Include.prototype.extractIncludeData = function (parentFilename, content) {
+function gulpInclude(options) {
     var
-        found = false
-        , filename
-        , fullFilename
-        , contentTop
-        , contentBottom
-        , contentInclude
-        , posOpen
-        , posClose
-        , looping
+        stream
+        , content
+        , tagOpen
+        , tagClose
+        , stackPath = []
         ;
 
-    if (!content) return;
+    options = defaults(options || {}, { tagname: 'include' });
+    tagOpen = '<' + options.tagname + '>';
+    tagClose = '</' + options.tagname + '>';
 
-    posOpen = content.indexOf(this.options.tagOpen);
-    if (posOpen > -1) {
-        posClose = content.indexOf(this.options.tagClose, posOpen + this.options.tagOpen.length);
+    this.stackPath = [];
 
-        if (posClose > -1) {
-            found = true;
+    function extractIncludeData(parentFilename, content) {
+        var
+            found = false
+            , filename
+            , fullFilename
+            , contentTop
+            , contentBottom
+            , contentInclude
+            , posOpen
+            , posClose
+            , looping
+            ;
+
+        if (!content) return;
+
+        posOpen = content.indexOf(tagOpen);
+        if (posOpen > -1) {
+            posClose = content.indexOf(tagClose, posOpen + tagOpen.length);
+
+            if (posClose > -1) {
+                found = true;
+            }
         }
+
+        if (!found) return;
+
+        filename = content.substring(posOpen + tagOpen.length, posClose).trim();
+        fullFilename = path.normalize(path.dirname(parentFilename) + path.sep + filename);
+
+        if (!fs.existsSync(fullFilename))
+            throw new PluginError(PLUGIN_NAME, 'File not found: ' + fullFilename);
+
+        looping = stackPath.length > 1 && stackPath.indexOf(fullFilename) > -1;
+        if (looping)
+            throw new PluginError(PLUGIN_NAME, ['Looping include', EOL, 'Stack path:', EOL, stackPath.join(EOL)].join(''));
+
+        contentTop = content.substring(0, posOpen);
+        contentBottom = content.substring(posClose + tagClose.length);
+        contentInclude = fs.readFileSync(fullFilename, { encoding: 'utf8' });
+
+        return {
+            filename: filename,
+            fullFilename: fullFilename,
+            contentTop: contentTop,
+            contentBottom: contentBottom,
+            contentInclude: contentInclude
+        };
     }
 
-    if (!found) return;
+    function processingContent(parentFilename, content) {
+        var data;
+        stackPath.push(parentFilename);
 
-    filename = content.substring(posOpen + this.options.tagOpen.length, posClose).trim();
-    fullFilename = path.normalize(path.dirname(parentFilename) + path.sep + filename);
+        data = extractIncludeData(parentFilename, content);
+        while (data) {
+            data.contentInclude = processingContent(data.fullFilename, data.contentInclude);
 
-    if (!fs.existsSync(fullFilename)) throw new gutil.PluginError(pluginName, 'File not found: ' + fullFilename);
+            content = data.contentTop + data.contentInclude + data.contentBottom;
+            data = extractIncludeData(parentFilename, content);
+        }
 
-    looping = this.stackPath.length > 1 && this.stackPath.indexOf(fullFilename) > -1;
-    if (looping) {
-        this.emit('error',
-            new gutil.PluginError(pluginName, ['Looping include', os.EOL, 'Stack path:', os.EOL, this.stackPath.join(os.EOL)].join('') ));
+        stackPath.pop();
+        return content;
     }
 
-    contentTop = content.substring(0, posOpen);
-    contentBottom = content.substring(posClose + this.options.tagClose.length);
-    contentInclude = fs.readFileSync(fullFilename, { encoding: 'utf8' });
+    stream = through.obj(function(file, enc, cb) {
+        if (file.isNull()) {
+            // do nothing if no contents
+        }
 
-    return {
-        filename: filename,
-        fullFilename: fullFilename,
-        contentTop: contentTop,
-        contentBottom: contentBottom,
-        contentInclude: contentInclude
-    };
-};
+        if (file.isStream()) {
+            this.emit('error', new PluginError(PLUGIN_NAME, 'Stream content is not supported'));
+            return cb();
+        }
 
-Include.prototype.processingContent = function (parentFilename, content) {
-    var data;
-    this.stackPath.push(parentFilename);
+        if (file.isBuffer()) {
+            try {
+                content = processingContent(path.normalize(file.path), file.contents.toString('utf8'));
 
-    data = this.extractIncludeData(parentFilename, content);
-    while (data) {
-        data.contentInclude = this.processingContent(data.fullFilename, data.contentInclude);
+                if (typeof content === 'string' && content) {
+                    file.contents = new Buffer(content);
+                }
+            } catch (err) {
+                this.emit('error', new PluginError(PLUGIN_NAME, err));
+            }
+        }
 
-        content = data.contentTop + data.contentInclude + data.contentBottom;
-        data = this.extractIncludeData(parentFilename, content);
-    }
+        this.push(file);
+        return cb();
+    });
 
-    this.stackPath.pop();
-    return content;
-};
+    return stream;
+}
 
-module.exports = function (options) {
-    return new Include(options);
-};
+module.exports = gulpInclude;
