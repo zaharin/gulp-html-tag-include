@@ -42,11 +42,16 @@ Include.prototype._transform = function (file, enc, cb) {
     }
 
     if (file.isBuffer) {
-        content = this.processingContent(path.normalize(file.path), file.contents.toString('utf8'));
+        try {
+            content = this.processingContent(path.normalize(file.path), file.contents.toString('utf8'));
 
-        if (typeof content === 'string' && content) {
-            file.contents = new Buffer(content);
+            if (typeof content === 'string' && content) {
+                file.contents = new Buffer(content);
+            }
+        } catch (err) {
+            this.emit('error', new gutil.PluginError(pluginName, err));
         }
+
     }
 
     this.push(file);
