@@ -11,7 +11,7 @@ npm install --save-dev gulp-html-tag-include
 ### options
 
 * options - type: `object`
-  - tagName: `string`, default `include`
+  - tagname: `string`, default `include`
 
 ### Sample `gulpfile.js`
 Then, add it to your `gulpfile.js`:
