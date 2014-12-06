@@ -19,7 +19,9 @@ function Include(options, transOptions) {
     transOptions.objectMode = true;
     stream.Transform.call(this, transOptions);
 
-    this.options.tagName = this.options.tagName || 'include';
+    options = options || {};
+    this.options = {};
+    this.options.tagName = options.tagName || 'include';
     this.options.tagOpen = '<' + this.options.tagName + '>';
     this.options.tagClose = '</' + this.options.tagName + '>';
 
