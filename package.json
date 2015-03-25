@@ -1,6 +1,6 @@
 {
   "name": "gulp-html-tag-include",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Gulp plugin for building HTML files into each other",
   "main": "index.js",
   "author": {
@@ -21,7 +21,6 @@
   "license": "MIT",
   "dependencies": {
     "gulp-util": "^3.0.1",
-    "lodash.defaults": "^2.4.1",
     "through2": "^0.6.3"
   },
   "homepage": "https://github.com/zaharin/gulp-html-tag-include"
