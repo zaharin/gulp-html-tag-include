@@ -23,7 +23,7 @@ var gulp = require('gulp'),
 	include = require('gulp-html-tag-include');
 
 gulp.task('html-include', function() {
-	return gulp.src('./source/*.html')
+	return gulp.src('./source/index.html')
 		.pipe(include())
 		.pipe(gulp.dest('./build/'));
 });
