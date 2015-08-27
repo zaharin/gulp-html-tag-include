@@ -36,7 +36,7 @@ var GulpHtmlTagIncludePlugin = (function () {
         if (!attributes.src) {
             throw new PluginError(GulpHtmlTagIncludePlugin.PLUGIN_NAME, 'Not specified attribute "src" in file "' + parentFile + '"');
         }
-        var file = path.normalize(path.dirname(parentFile) + path.sep + attributes.src);
+        var file = path.normalize(process.cwd() + attributes.src);
         //check looping
         if (this.stackPath.indexOf(file) > -1) {
             throw new PluginError(GulpHtmlTagIncludePlugin.PLUGIN_NAME, ['Looping include', os.EOL, 'Stack path:', os.EOL, this.stackPath.join(os.EOL)].join(''));
