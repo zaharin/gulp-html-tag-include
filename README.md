@@ -14,6 +14,7 @@ npm install --save-dev gulp-html-tag-include
   - tagName: `string`, default `include`
   - autoIndent: `boolean`, default `true`
   - prefixVar: `string`, default `@@`
+  - basePath: `string` default `location of gulp file`
 
 ### Sample `gulpfile.js`
 Then, add it to your `gulpfile.js`:
