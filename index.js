@@ -3,7 +3,7 @@ var PluginError = require('gulp-util').PluginError, path = require('path'), fs =
 var GulpHtmlTagIncludePlugin = (function () {
     function GulpHtmlTagIncludePlugin(options) {
         this.stackPath = [];
-        this.options = { tagName: 'include', autoIndent: true, prefixVar: '@@' };
+        this.options = { tagName: 'include', autoIndent: true, prefixVar: '@@',basePath: process.cwd()  };
         if (options) {
             this.options.tagName = options.tagName || this.options.tagName;
             this.options.autoIndent = options.autoIndent || this.options.autoIndent;
@@ -36,7 +36,7 @@ var GulpHtmlTagIncludePlugin = (function () {
         if (!attributes.src) {
             throw new PluginError(GulpHtmlTagIncludePlugin.PLUGIN_NAME, 'Not specified attribute "src" in file "' + parentFile + '"');
         }
-        var file = path.normalize(process.cwd() + attributes.src);
+        var file = path.normalize(this.options.basePath + attributes.src);
         //check looping
         if (this.stackPath.indexOf(file) > -1) {
             throw new PluginError(GulpHtmlTagIncludePlugin.PLUGIN_NAME, ['Looping include', os.EOL, 'Stack path:', os.EOL, this.stackPath.join(os.EOL)].join(''));
