@@ -8,6 +8,8 @@ var GulpHtmlTagIncludePlugin = (function () {
             this.options.tagName = options.tagName || this.options.tagName;
             this.options.autoIndent = options.autoIndent || this.options.autoIndent;
             this.options.prefixVar = options.prefixVar || this.options.prefixVar;
+            this.options.basePath = options.basePath || this.options.basePath;
+
         }
         this.directiveRegexp = RegExp('<' + this.options.tagName + '\\s+([\\s\\S]*?)>([\\s\\S]*?)<\\/' + this.options.tagName + '>', 'gi');
     }
