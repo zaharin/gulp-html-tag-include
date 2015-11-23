@@ -9,7 +9,7 @@ var GulpHtmlTagIncludePlugin = (function () {
             this.options.autoIndent = options.autoIndent || this.options.autoIndent;
             this.options.prefixVar = options.prefixVar || this.options.prefixVar;
         }
-        this.directiveRegexp = RegExp('<' + this.options.tagName + '\\s+([\\s\\S]*?)>([\\s\\S]*?)<\\/' + this.options.tagName + '>', 'gi');
+        this.directiveRegexp = RegExp('<' + this.options.tagName + '\\s+(?!.*data-exclude=.*)([\\s\\S]*?)>([\\s\\S]*?)<\\/' + this.options.tagName + '>', 'gi');
     }
     GulpHtmlTagIncludePlugin.prototype.getFileContent = function (file) {
         if (!fs.existsSync(file))
